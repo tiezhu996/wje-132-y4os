@@ -7,7 +7,7 @@ import (
 	"safetyplatform/internal/constants"
 )
 
-// formatters.go 同时提供日期格式化、严重等级文本、事件状态文本、检查状态文本、培训类型文本、资质状态文本。
+// formatters.go 同时提供日期格式化、严重等级文本、事件状态文本、检查状态文本、整改任务状态文本、培训类型文本、资质状态文本。
 
 // FormatDateTime 格式化日期时间。
 func FormatDateTime(t time.Time) string {
@@ -66,6 +66,38 @@ func InspectionStatusText(s string) string {
 		return "不合格"
 	default:
 		return s
+	}
+}
+
+// RectificationStatusText 整改任务状态文本。
+func RectificationStatusText(s string) string {
+	switch s {
+	case constants.RectificationPending:
+		return "待整改"
+	case constants.RectificationSubmitted:
+		return "待复查"
+	case constants.RectificationReturned:
+		return "已退回"
+	case constants.RectificationApproved:
+		return "复查通过"
+	default:
+		return s
+	}
+}
+
+// RectificationActionText 整改办理记录动作文本。
+func RectificationActionText(a string) string {
+	switch a {
+	case constants.RectificationActionAssign:
+		return "登记整改"
+	case constants.RectificationActionSubmit:
+		return "提交整改"
+	case constants.RectificationActionReviewPass:
+		return "复查通过"
+	case constants.RectificationActionReviewReturn:
+		return "复查退回"
+	default:
+		return a
 	}
 }
 

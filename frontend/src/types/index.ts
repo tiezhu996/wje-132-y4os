@@ -48,6 +48,31 @@ export interface InspectionItem {
   photo_url: string
 }
 
+export interface RectificationTask {
+  id: number
+  inspection_item_id: number
+  inspection_id: number
+  item_name: string
+  assignee_id: number
+  deadline: string | null
+  status: string
+  created_at: string
+  updated_at: string
+  inspection_name: string
+  assignee_name: string
+  overdue: boolean
+}
+
+export interface RectificationRecord {
+  id: number
+  task_id: number
+  action: string
+  content: string
+  operator_id: number
+  operator_name: string
+  created_at: string
+}
+
 export interface SafetyTraining {
   id: number
   topic: string

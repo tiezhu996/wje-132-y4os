@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Card, Col, Row, Statistic, Table } from 'antd'
+import { useNavigate } from 'react-router-dom'
 import ReactECharts from 'echarts-for-react'
 import { getDashboardStats } from '@/api/dashboard'
 import RiskLevelTag from '@/components/common/RiskLevelTag'
@@ -15,10 +16,12 @@ interface Stats {
   inspection: { total: number; completed_rate: number }
   training_completed_rate: number
   expiring_certs: unknown[]
+  rectification: { pending: number; overdue: number }
 }
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     getDashboardStats().then((res: any) => setStats(res.data))
@@ -44,10 +47,20 @@ export default function Dashboard() {
   return (
     <div>
       <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col span={6}><Card><Statistic title="检查计划总数" value={stats?.inspection.total || 0} /></Card></Col>
-        <Col span={6}><Card><Statistic title="检查完成率" value={stats?.inspection.completed_rate || 0} suffix="%" /></Card></Col>
-        <Col span={6}><Card><Statistic title="本月培训完成率" value={stats?.training_completed_rate || 0} suffix="%" /></Card></Col>
-        <Col span={6}><Card><Statistic title="即将过期资质" value={stats?.expiring_certs?.length || 0} /></Card></Col>
+        <Col span={4}><Card><Statistic title="检查计划总数" value={stats?.inspection.total || 0} /></Card></Col>
+        <Col span={4}><Card><Statistic title="检查完成率" value={stats?.inspection.completed_rate || 0} suffix="%" /></Card></Col>
+        <Col span={4}><Card><Statistic title="本月培训完成率" value={stats?.training_completed_rate || 0} suffix="%" /></Card></Col>
+        <Col span={4}><Card><Statistic title="即将过期资质" value={stats?.expiring_certs?.length || 0} /></Card></Col>
+        <Col span={4}>
+          <Card hoverable onClick={() => navigate('/rectifications?filter=pending')}>
+            <Statistic title="待整改任务" value={stats?.rectification?.pending || 0} />
+          </Card>
+        </Col>
+        <Col span={4}>
+          <Card hoverable onClick={() => navigate('/rectifications?filter=overdue')}>
+            <Statistic title="已逾期任务" value={stats?.rectification?.overdue || 0} valueStyle={{ color: '#cf1322' }} />
+          </Card>
+        </Col>
       </Row>
       <Row gutter={16}>
         <Col span={14}><Card><ReactECharts option={trendOption} style={{ height: 320 }} /></Card></Col>

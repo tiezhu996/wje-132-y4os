@@ -1,2 +1,7 @@
 body { margin: 0; background: #f5f5f5; }
 * { box-sizing: border-box; }
+
+/* 逾期整改任务行醒目显示 */
+.rectification-row-overdue > td {
+  background: #fff1f0 !important;
+}

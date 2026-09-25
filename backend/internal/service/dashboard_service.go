@@ -12,13 +12,14 @@ type DashboardService struct {
 	inspectionSvc *SafetyInspectionService
 	trainingSvc   *SafetyTrainingService
 	certSvc       *WorkerCertificationService
+	rectTaskSvc   *RectificationTaskService
 	logger        *slog.Logger
 }
 
 // NewDashboardService 构造仪表盘服务。
 func NewDashboardService(incidentSvc *SafetyIncidentService, inspectionSvc *SafetyInspectionService,
-	trainingSvc *SafetyTrainingService, certSvc *WorkerCertificationService, logger *slog.Logger) *DashboardService {
-	return &DashboardService{incidentSvc: incidentSvc, inspectionSvc: inspectionSvc, trainingSvc: trainingSvc, certSvc: certSvc, logger: logger}
+	trainingSvc *SafetyTrainingService, certSvc *WorkerCertificationService, rectTaskSvc *RectificationTaskService, logger *slog.Logger) *DashboardService {
+	return &DashboardService{incidentSvc: incidentSvc, inspectionSvc: inspectionSvc, trainingSvc: trainingSvc, certSvc: certSvc, rectTaskSvc: rectTaskSvc, logger: logger}
 }
 
 // Stats 汇总仪表盘数据。
@@ -47,6 +48,10 @@ func (s *DashboardService) Stats() (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+	rectPending, rectOverdue, err := s.rectTaskSvc.PendingStats()
+	if err != nil {
+		return nil, err
+	}
 	result := map[string]any{
 		"trend":                   trend,
 		"severity_distribution":   distribution,
@@ -54,6 +59,7 @@ func (s *DashboardService) Stats() (map[string]any, error) {
 		"inspection":              inspectionStats,
 		"training_completed_rate": trainingRate["rate"],
 		"expiring_certs":          expiring,
+		"rectification":           map[string]any{"pending": rectPending, "overdue": rectOverdue},
 	}
 	s.logger.Info(constants.LogDashboardStats, "data", result)
 	return result, nil

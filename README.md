@@ -64,10 +64,10 @@ wje-132/
 │   ├── cmd/server/main.go
 │   └── internal/
 │       ├── config/
-│       ├── model/                 # user/safety_incident/safety_inspection/inspection_item/safety_training/worker_certification/audit_log
+│       ├── model/                 # user/safety_incident/safety_inspection/inspection_item/rectification_task/safety_training/worker_certification/audit_log
 │       ├── repository/            # 按实体分文件
 │       ├── service/               # 业务逻辑 + dashboard + 种子数据 + 单元测试
-│       ├── handler/               # 按实体分文件（含 upload_handler、audit_log_handler）
+│       ├── handler/               # 按实体分文件（含 upload_handler、audit_log_handler、rectification_task_handler）
 │       ├── router/                # router.go + 按实体分文件
 │       ├── middleware/            # auth/rbac/audit_log/error_handler/rate_limiter/upload/cors/request_logger
 │       ├── dto/
@@ -75,12 +75,12 @@ wje-132/
 │       └── util/                  # jwt/logger/formatters/app_error/file_upload
 └── frontend/
     └── src/
-        ├── api/                   # user/incident/inspection/training/certification/dashboard/auditLog/upload
-        ├── stores/                # authStore/userStore/incidentStore/inspectionStore/trainingStore
+        ├── api/                   # user/incident/inspection/rectification/training/certification/dashboard/auditLog/upload
+        ├── stores/                # authStore/userStore/incidentStore/inspectionStore/rectificationStore/trainingStore
         ├── types/
-        ├── components/common/     # StatusBadge/RiskLevelTag/UserAvatar/EmptyState/AvatarUploader/RoleGuard/ErrorBoundary
+        ├── components/common/     # StatusBadge/RectificationStatusBadge/RiskLevelTag/UserAvatar/EmptyState/AvatarUploader/RoleGuard/ErrorBoundary
         ├── hooks/                 # useIncident/usePagination/useFileUpload/useAuth
-        ├── pages/                 # Dashboard/IncidentManage/InspectionManage/TrainingManage/CertReview/Profile/AuditLogs/Login
+        ├── pages/                 # Dashboard/IncidentManage/InspectionManage/RectificationTasks/TrainingManage/CertReview/Profile/AuditLogs/Login
         ├── router/                # index.tsx + guards.tsx
         ├── utils/                 # getSeverityColor/dateFormat/request
         └── constants/             # incident/user/errorCodes
@@ -126,6 +126,10 @@ wje-132/
 - 后端：`backend/internal/constants/user.go`、`backend/internal/model/user.go`、`backend/internal/middleware/rbac.go`、`backend/internal/router/*.go`、`backend/internal/util/formatters.go`、`database/init.sql`
 - 前端：`frontend/src/constants/user.ts`、`frontend/src/stores/authStore.ts`、`frontend/src/components/common/RoleGuard.tsx`、`frontend/src/router/guards.tsx`、`frontend/src/pages/Login.tsx`
 
+### RectificationStatus（pending/submitted/returned/approved）
+- 后端：`backend/internal/constants/rectification.go`、`backend/internal/model/rectification_task.go`、`backend/internal/service/rectification_task_service.go`、`backend/internal/repository/rectification_task_repository.go`、`backend/internal/util/formatters.go`、`backend/internal/constants/error_codes.go`、`backend/internal/constants/log_templates.go`、`backend/internal/dto/dto_rectification.go`、`database/init.sql`
+- 前端：`frontend/src/constants/rectification.ts`、`frontend/src/components/common/RectificationStatusBadge.tsx`、`frontend/src/pages/RectificationTasks.tsx`、`frontend/src/pages/Dashboard.tsx`
+
 ## API 接口清单
 
 | 方法 | 路径 | 说明 |
@@ -151,6 +155,11 @@ wje-132/
 | POST | /api/v1/inspections/:id/execute | 执行检查 |
 | GET | /api/v1/inspections/:id/report | 检查报告 |
 | GET | /api/v1/inspection-items/by-inspection/:id | 按检查查询检查项 |
+| GET | /api/v1/rectification-tasks | 整改任务列表（filter=pending 待整改 / overdue 已逾期） |
+| GET | /api/v1/rectification-tasks/:id | 整改任务详情（含办理记录） |
+| POST | /api/v1/rectification-tasks/:id/assign | 登记责任人和整改期限 |
+| POST | /api/v1/rectification-tasks/:id/submit | 责任人提交整改说明 |
+| POST | /api/v1/rectification-tasks/:id/review | 复查（通过闭环 / 退回并保留原记录） |
 | GET | /api/v1/trainings | 培训列表 |
 | POST | /api/v1/trainings | 创建培训 |
 | GET | /api/v1/trainings/:id | 培训详情 |
@@ -164,9 +173,10 @@ wje-132/
 
 ## 主要功能
 
-- 安全概览：近 30 天事件趋势折线图、风险等级分布饼图、待整改列表、本月培训完成率。
+- 安全概览：近 30 天事件趋势折线图、风险等级分布饼图、待整改列表、本月培训完成率、待整改/已逾期整改任务统计。
 - 事件管理：上报事件、指派调查、提交整改、关闭事件，按严重等级/状态/时间筛选。
 - 检查管理：创建检查计划、逐项执行检查（合格/不合格）、得分与检查报告。
+- 整改任务：检查勾出的每个不合格项自动生成唯一整改任务，登记责任人和整改期限，责任人提交整改说明后等待复查，复查不通过退回并保留原办理记录，复查通过才闭环；列表支持按待整改/已逾期筛选，逾期任务醒目红色标记。
 - 培训管理：创建培训、记录签到与通过率。
 - 资质审核：提交资质、审核、过期预警。
 - 审计日志：写操作自动记录（管理员查看）。

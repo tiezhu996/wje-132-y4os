@@ -98,6 +98,18 @@ func (r *SafetyInspectionRepository) Count() (int64, error) {
 	return n, nil
 }
 
+// ListByIDs 按 ID 批量查询检查。
+func (r *SafetyInspectionRepository) ListByIDs(ids []uint64) ([]model.SafetyInspection, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var list []model.SafetyInspection
+	if err := r.db.Where("id IN ?", ids).Find(&list).Error; err != nil {
+		return nil, fmt.Errorf("list inspections by ids: %w", err)
+	}
+	return list, nil
+}
+
 // CompletedRate 本月完成率。
 func (r *SafetyInspectionRepository) CompletedRate() (map[string]float64, error) {
 	start := time.Date(time.Now().Year(), time.Now().Month(), 1, 0, 0, 0, 0, time.Local)

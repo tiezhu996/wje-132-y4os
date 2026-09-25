@@ -72,3 +72,15 @@ func (r *UserRepository) List(page, pageSize int) ([]model.User, int64, error) {
 	}
 	return list, total, nil
 }
+
+// ListByIDs 按 ID 批量查询用户。
+func (r *UserRepository) ListByIDs(ids []uint64) ([]model.User, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var list []model.User
+	if err := r.db.Where("id IN ?", ids).Find(&list).Error; err != nil {
+		return nil, fmt.Errorf("list users by ids: %w", err)
+	}
+	return list, nil
+}

@@ -63,6 +63,34 @@ CREATE TABLE IF NOT EXISTS inspection_items (
   KEY idx_items_inspection (inspection_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS rectification_tasks (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  inspection_item_id BIGINT UNSIGNED NOT NULL,
+  inspection_id BIGINT UNSIGNED NOT NULL,
+  item_name VARCHAR(200) NOT NULL,
+  assignee_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  deadline DATETIME NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'pending',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_rect_item (inspection_item_id),
+  KEY idx_rect_inspection (inspection_id),
+  KEY idx_rect_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS rectification_records (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  task_id BIGINT UNSIGNED NOT NULL,
+  action VARCHAR(30) NOT NULL,
+  content VARCHAR(500) NOT NULL DEFAULT '',
+  operator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  operator_name VARCHAR(50) NOT NULL DEFAULT '',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_rect_records_task (task_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS safety_trainings (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   topic VARCHAR(200) NOT NULL,
@@ -121,13 +149,28 @@ INSERT INTO safety_incidents (id, title, description, occurred_at, site_id, area
 (3, '高处坠物未遂', '塔吊吊运时构件滑落未造成伤害。', DATE_SUB(NOW(), INTERVAL 5 DAY), 'SITE-A', '吊装区', 'minor', '物体打击', '["4"]', '[]', 'closed', '加强吊装指挥与警戒', DATE_SUB(NOW(), INTERVAL 2 DAY), 2, NOW(3));
 
 INSERT INTO safety_inspections (id, name, inspection_type, area, inspection_date, inspector_id, total_score, status, issue_count, passed_count, created_at) VALUES
-(1, '8月例行安全检查', 'routine', '全工地', DATE_SUB(NOW(), INTERVAL 1 DAY), 3, 92, 'completed', 3, 27, NOW(3)),
+(1, '8月例行安全检查', 'routine', '全工地', DATE_SUB(NOW(), INTERVAL 1 DAY), 3, 40, 'failed', 3, 2, NOW(3)),
 (2, '高处作业专项检查', 'special', '三层作业面', DATE_ADD(NOW(), INTERVAL 1 DAY), 3, 0, 'scheduled', 0, 0, NOW(3));
 
 INSERT INTO inspection_items (id, inspection_id, item_name, passed, remark, photo_url) VALUES
 (1, 1, '安全帽佩戴', 1, '', ''),
 (2, 1, '临边防护栏杆', 0, '东侧栏杆缺失', ''),
-(3, 1, '消防器材齐全', 1, '', '');
+(3, 1, '消防器材齐全', 1, '', ''),
+(4, 1, '临时用电规范', 0, '电缆绝缘层破损', ''),
+(5, 1, '消防通道畅通', 0, '通道堆放模板', '');
+
+INSERT INTO rectification_tasks (id, inspection_item_id, inspection_id, item_name, assignee_id, deadline, status, created_at, updated_at) VALUES
+(1, 2, 1, '临边防护栏杆', 4, DATE_SUB(NOW(), INTERVAL 1 DAY), 'pending', NOW(3), NOW(3)),
+(2, 4, 1, '临时用电规范', 4, DATE_ADD(NOW(), INTERVAL 2 DAY), 'submitted', NOW(3), NOW(3)),
+(3, 5, 1, '消防通道畅通', 2, DATE_ADD(NOW(), INTERVAL 5 DAY), 'returned', NOW(3), NOW(3));
+
+INSERT INTO rectification_records (id, task_id, action, content, operator_id, operator_name, created_at) VALUES
+(1, 1, 'assign', '登记责任人：赵工', 3, '李监理', NOW(3)),
+(2, 2, 'assign', '登记责任人：赵工', 3, '李监理', NOW(3)),
+(3, 2, 'submit', '已更换破损电缆并加套管保护', 4, '赵工', NOW(3)),
+(4, 3, 'assign', '登记责任人：王安全', 3, '李监理', NOW(3)),
+(5, 3, 'submit', '已清理通道杂物', 2, '王安全', NOW(3)),
+(6, 3, 'review_return', '复查仍发现通道堆放模板，退回重新整改', 3, '李监理', NOW(3));
 
 INSERT INTO safety_trainings (id, topic, training_type, training_date, duration_hours, trainer, location, content_summary, participant_ids, assessment_method, pass_rate, created_at) VALUES
 (1, '新员工入场安全培训', 'induction', DATE_SUB(NOW(), INTERVAL 3 DAY), 4, '王安全', '培训室A', '入场安全须知与应急疏散。', '["4"]', '笔试', 95.00, NOW(3)),

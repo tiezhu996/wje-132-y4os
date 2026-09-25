@@ -43,6 +43,12 @@ func TestFormatters(t *testing.T) {
 	if CertStatusText(constants.CertPending) != "待审核" {
 		t.Error("cert status text mismatch")
 	}
+	if RectificationStatusText(constants.RectificationSubmitted) != "待复查" {
+		t.Error("rectification status text mismatch")
+	}
+	if RectificationActionText(constants.RectificationActionReviewReturn) != "复查退回" {
+		t.Error("rectification action text mismatch")
+	}
 	if UserRoleText(constants.RoleSafetyManager) != "安全管理员" {
 		t.Error("role text mismatch")
 	}

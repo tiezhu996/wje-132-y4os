@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button, Card, DatePicker, Form, Input, InputNumber, Modal, Select, Space, Table, Checkbox, message } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import { createInspection, executeInspection, getInspection } from '@/api/inspection'
 import { useInspectionStore } from '@/stores/inspectionStore'
 import StatusBadge from '@/components/common/StatusBadge'
@@ -16,6 +17,7 @@ const typeOptions = [
 
 export default function InspectionManage() {
   const store = useInspectionStore()
+  const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [statusFilter, setStatusFilter] = useState('')
@@ -84,12 +86,18 @@ export default function InspectionManage() {
           { title: '状态', dataIndex: 'status', render: (v) => <StatusBadge status={v} /> },
           {
             title: '操作',
-            render: (_, row) =>
-              row.status === 'scheduled' || row.status === 'in_progress' ? (
-                <Button size="small" type="primary" onClick={() => openExecute(row.id)}>执行检查</Button>
-              ) : (
-                <a onClick={() => openExecute(row.id)}>查看</a>
-              ),
+            render: (_, row) => (
+              <Space size={8}>
+                {row.status === 'scheduled' || row.status === 'in_progress' ? (
+                  <Button size="small" type="primary" onClick={() => openExecute(row.id)}>执行检查</Button>
+                ) : (
+                  <a onClick={() => openExecute(row.id)}>查看</a>
+                )}
+                {row.issue_count > 0 && (
+                  <a onClick={() => navigate(`/rectifications?inspection_id=${row.id}`)}>整改任务</a>
+                )}
+              </Space>
+            ),
           },
         ]}
       />

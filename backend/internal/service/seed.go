@@ -55,7 +55,7 @@ func (s *SeedService) Seed() error {
 		}
 	}
 	inspections := []model.SafetyInspection{
-		{Name: "8月例行安全检查", InspectionType: constants.InspectionRoutine, Area: "全工地", InspectionDate: time.Now().AddDate(0, 0, -1), InspectorID: 3, TotalScore: 92, Status: constants.InspectionCompleted, IssueCount: 1, PassedCount: 2},
+		{Name: "8月例行安全检查", InspectionType: constants.InspectionRoutine, Area: "全工地", InspectionDate: time.Now().AddDate(0, 0, -1), InspectorID: 3, TotalScore: 40, Status: constants.InspectionFailed, IssueCount: 3, PassedCount: 2},
 		{Name: "高处作业专项检查", InspectionType: constants.InspectionSpecial, Area: "三层作业面", InspectionDate: time.Now().AddDate(0, 0, 1), InspectorID: 3, Status: constants.InspectionScheduled},
 	}
 	for i := range inspections {
@@ -67,9 +67,37 @@ func (s *SeedService) Seed() error {
 		{InspectionID: 1, ItemName: "安全帽佩戴", Passed: true},
 		{InspectionID: 1, ItemName: "临边防护栏杆", Passed: false, Remark: "东侧栏杆缺失"},
 		{InspectionID: 1, ItemName: "消防器材齐全", Passed: true},
+		{InspectionID: 1, ItemName: "临时用电规范", Passed: false, Remark: "电缆绝缘层破损"},
+		{InspectionID: 1, ItemName: "消防通道畅通", Passed: false, Remark: "通道堆放模板"},
 	}
 	for i := range items {
 		if err := s.db.Create(&items[i]).Error; err != nil {
+			return err
+		}
+	}
+	overdueDeadline := time.Now().AddDate(0, 0, -1)
+	submitDeadline := time.Now().AddDate(0, 0, 2)
+	returnedDeadline := time.Now().AddDate(0, 0, 5)
+	tasks := []model.RectificationTask{
+		{InspectionItemID: 2, InspectionID: 1, ItemName: "临边防护栏杆", AssigneeID: 4, Deadline: &overdueDeadline, Status: constants.RectificationPending},
+		{InspectionItemID: 4, InspectionID: 1, ItemName: "临时用电规范", AssigneeID: 4, Deadline: &submitDeadline, Status: constants.RectificationSubmitted},
+		{InspectionItemID: 5, InspectionID: 1, ItemName: "消防通道畅通", AssigneeID: 2, Deadline: &returnedDeadline, Status: constants.RectificationReturned},
+	}
+	for i := range tasks {
+		if err := s.db.Create(&tasks[i]).Error; err != nil {
+			return err
+		}
+	}
+	records := []model.RectificationRecord{
+		{TaskID: 1, Action: constants.RectificationActionAssign, Content: "登记责任人：赵工；整改期限：" + overdueDeadline.Format("2006-01-02 15:04"), OperatorID: 3, OperatorName: "李监理"},
+		{TaskID: 2, Action: constants.RectificationActionAssign, Content: "登记责任人：赵工；整改期限：" + submitDeadline.Format("2006-01-02 15:04"), OperatorID: 3, OperatorName: "李监理"},
+		{TaskID: 2, Action: constants.RectificationActionSubmit, Content: "已更换破损电缆并加套管保护", OperatorID: 4, OperatorName: "赵工"},
+		{TaskID: 3, Action: constants.RectificationActionAssign, Content: "登记责任人：王安全；整改期限：" + returnedDeadline.Format("2006-01-02 15:04"), OperatorID: 3, OperatorName: "李监理"},
+		{TaskID: 3, Action: constants.RectificationActionSubmit, Content: "已清理通道杂物", OperatorID: 2, OperatorName: "王安全"},
+		{TaskID: 3, Action: constants.RectificationActionReviewReturn, Content: "复查仍发现通道堆放模板，退回重新整改", OperatorID: 3, OperatorName: "李监理"},
+	}
+	for i := range records {
+		if err := s.db.Create(&records[i]).Error; err != nil {
 			return err
 		}
 	}

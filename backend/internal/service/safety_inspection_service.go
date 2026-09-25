@@ -14,17 +14,19 @@ import (
 
 // SafetyInspectionService 安全检查业务逻辑。
 type SafetyInspectionService struct {
-	db       *gorm.DB
-	repo     *repository.SafetyInspectionRepository
-	itemRepo *repository.InspectionItemRepository
-	userRepo *repository.UserRepository
-	logger   *slog.Logger
+	db          *gorm.DB
+	repo        *repository.SafetyInspectionRepository
+	itemRepo    *repository.InspectionItemRepository
+	userRepo    *repository.UserRepository
+	rectTaskSvc *RectificationTaskService
+	logger      *slog.Logger
 }
 
 // NewSafetyInspectionService 构造安全检查服务。
 func NewSafetyInspectionService(db *gorm.DB, repo *repository.SafetyInspectionRepository,
-	itemRepo *repository.InspectionItemRepository, userRepo *repository.UserRepository, logger *slog.Logger) *SafetyInspectionService {
-	return &SafetyInspectionService{db: db, repo: repo, itemRepo: itemRepo, userRepo: userRepo, logger: logger}
+	itemRepo *repository.InspectionItemRepository, userRepo *repository.UserRepository,
+	rectTaskSvc *RectificationTaskService, logger *slog.Logger) *SafetyInspectionService {
+	return &SafetyInspectionService{db: db, repo: repo, itemRepo: itemRepo, userRepo: userRepo, rectTaskSvc: rectTaskSvc, logger: logger}
 }
 
 // Create 创建检查计划。
@@ -120,6 +122,11 @@ func (s *SafetyInspectionService) Execute(id uint64, items []model.InspectionIte
 		if err := s.repo.UpdateTx(tx, cur); err != nil {
 			s.logger.Error(constants.LogInspectionExecuteFailed, "error", err.Error())
 			return util.Wrap(err, "SafetyInspection[id=%d] execute save failed", id)
+		}
+		// 每个不合格项生成唯一可跟踪的整改任务（同一项重复执行只保留一次办理结果）。
+		if err := s.rectTaskSvc.EnsureTasksForFailedTx(tx, id, existing); err != nil {
+			s.logger.Error(constants.LogInspectionExecuteFailed, "error", err.Error())
+			return err
 		}
 		ins = cur
 		return nil

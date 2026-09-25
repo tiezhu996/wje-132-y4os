@@ -33,6 +33,7 @@ func main() {
 	}
 	if err := db.AutoMigrate(
 		&model.User{}, &model.SafetyIncident{}, &model.SafetyInspection{}, &model.InspectionItem{},
+		&model.RectificationTask{}, &model.RectificationRecord{},
 		&model.SafetyTraining{}, &model.WorkerCertification{}, &model.AuditLog{},
 	); err != nil {
 		logger.Error("auto migrate failed", "error", err.Error())
@@ -47,20 +48,23 @@ func main() {
 	incidentRepo := repository.NewSafetyIncidentRepository(db)
 	inspectionRepo := repository.NewSafetyInspectionRepository(db)
 	itemRepo := repository.NewInspectionItemRepository(db)
+	rectRepo := repository.NewRectificationTaskRepository(db)
 	trainingRepo := repository.NewSafetyTrainingRepository(db)
 	certRepo := repository.NewWorkerCertificationRepository(db)
 
 	userSvc := service.NewUserService(userRepo, logger)
 	incidentSvc := service.NewSafetyIncidentService(incidentRepo, userRepo, logger)
-	inspectionSvc := service.NewSafetyInspectionService(db, inspectionRepo, itemRepo, userRepo, logger)
+	rectTaskSvc := service.NewRectificationTaskService(db, rectRepo, userRepo, inspectionRepo, logger)
+	inspectionSvc := service.NewSafetyInspectionService(db, inspectionRepo, itemRepo, userRepo, rectTaskSvc, logger)
 	trainingSvc := service.NewSafetyTrainingService(trainingRepo, userRepo, logger)
 	certSvc := service.NewWorkerCertificationService(certRepo, userRepo, logger)
-	dashboardSvc := service.NewDashboardService(incidentSvc, inspectionSvc, trainingSvc, certSvc, logger)
+	dashboardSvc := service.NewDashboardService(incidentSvc, inspectionSvc, trainingSvc, certSvc, rectTaskSvc, logger)
 
 	userHandler := handler.NewUserHandler(userSvc, logger)
 	incidentHandler := handler.NewSafetyIncidentHandler(incidentSvc, logger)
 	inspectionHandler := handler.NewSafetyInspectionHandler(inspectionSvc, logger)
 	itemHandler := handler.NewInspectionItemHandler(inspectionSvc, logger)
+	rectificationHandler := handler.NewRectificationTaskHandler(rectTaskSvc, logger)
 	trainingHandler := handler.NewSafetyTrainingHandler(trainingSvc, logger)
 	certHandler := handler.NewWorkerCertificationHandler(certSvc, logger)
 	dashboardHandler := handler.NewDashboardHandler(dashboardSvc, logger)
@@ -68,7 +72,7 @@ func main() {
 	auditLogHandler := handler.NewAuditLogHandler(db, logger)
 
 	r := router.New(cfg, db, logger, userHandler, incidentHandler, inspectionHandler, itemHandler,
-		trainingHandler, certHandler, dashboardHandler, uploadHandler, auditLogHandler)
+		rectificationHandler, trainingHandler, certHandler, dashboardHandler, uploadHandler, auditLogHandler)
 
 	srv := &http.Server{
 		Addr:    ":" + cfg.ServerPort,

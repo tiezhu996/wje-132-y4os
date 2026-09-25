@@ -18,27 +18,29 @@ type Router struct {
 	logger  *slog.Logger
 	limiter *middleware.RateLimiter
 
-	user       *handler.UserHandler
-	incident   *handler.SafetyIncidentHandler
-	inspection *handler.SafetyInspectionHandler
-	item       *handler.InspectionItemHandler
-	training   *handler.SafetyTrainingHandler
-	cert       *handler.WorkerCertificationHandler
-	dashboard  *handler.DashboardHandler
-	upload     *handler.UploadHandler
-	auditLog   *handler.AuditLogHandler
+	user          *handler.UserHandler
+	incident      *handler.SafetyIncidentHandler
+	inspection    *handler.SafetyInspectionHandler
+	item          *handler.InspectionItemHandler
+	rectification *handler.RectificationTaskHandler
+	training      *handler.SafetyTrainingHandler
+	cert          *handler.WorkerCertificationHandler
+	dashboard     *handler.DashboardHandler
+	upload        *handler.UploadHandler
+	auditLog      *handler.AuditLogHandler
 }
 
 // New 构造路由装配器。
 func New(cfg *config.Config, db *gorm.DB, logger *slog.Logger,
 	user *handler.UserHandler, incident *handler.SafetyIncidentHandler,
 	inspection *handler.SafetyInspectionHandler, item *handler.InspectionItemHandler,
+	rectification *handler.RectificationTaskHandler,
 	training *handler.SafetyTrainingHandler, cert *handler.WorkerCertificationHandler,
 	dashboard *handler.DashboardHandler, upload *handler.UploadHandler, auditLog *handler.AuditLogHandler) *Router {
 	return &Router{
 		cfg: cfg, db: db, logger: logger,
 		limiter: middleware.NewRateLimiter(cfg.RateLimitPerMinute),
-		user:    user, incident: incident, inspection: inspection, item: item,
+		user:    user, incident: incident, inspection: inspection, item: item, rectification: rectification,
 		training: training, cert: cert, dashboard: dashboard, upload: upload, auditLog: auditLog,
 	}
 }
@@ -66,6 +68,7 @@ func (r *Router) Setup() *gin.Engine {
 	r.registerIncidentRoutes(v1)
 	r.registerInspectionRoutes(v1)
 	r.registerItemRoutes(v1)
+	r.registerRectificationRoutes(v1)
 	r.registerTrainingRoutes(v1)
 	r.registerCertRoutes(v1)
 	r.registerDashboardRoutes(v1)
