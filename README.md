@@ -151,6 +151,13 @@ wje-132/
 | POST | /api/v1/inspections/:id/execute | 执行检查 |
 | GET | /api/v1/inspections/:id/report | 检查报告 |
 | GET | /api/v1/inspection-items/by-inspection/:id | 按检查查询检查项 |
+| GET | /api/v1/rectification-tasks | 整改任务列表（status=pending_rectification 待整改 / overdue 已逾期 / pending/submitted/rejected/approved；mine=1 我的任务） |
+| POST | /api/v1/rectification-tasks | 为不合格检查项登记整改任务（责任人 + 整改期限，同一项唯一） |
+| GET | /api/v1/rectification-tasks/by-inspection/:id | 按检查查询整改任务 |
+| GET | /api/v1/rectification-tasks/:id | 整改任务详情与流转记录 |
+| POST | /api/v1/rectification-tasks/:id/submit | 责任人提交整改说明，等待复查 |
+| POST | /api/v1/rectification-tasks/:id/review | 复查整改（通过 / 不通过退回，退回须填意见且保留原记录） |
+| GET | /api/v1/users/options | 用户精简选项（责任人下拉） |
 | GET | /api/v1/trainings | 培训列表 |
 | POST | /api/v1/trainings | 创建培训 |
 | GET | /api/v1/trainings/:id | 培训详情 |
@@ -167,6 +174,7 @@ wje-132/
 - 安全概览：近 30 天事件趋势折线图、风险等级分布饼图、待整改列表、本月培训完成率。
 - 事件管理：上报事件、指派调查、提交整改、关闭事件，按严重等级/状态/时间筛选。
 - 检查管理：创建检查计划、逐项执行检查（合格/不合格）、得分与检查报告。
+- 整改跟踪：每个不合格项登记为整改任务（责任人、整改期限）；责任人提交整改说明后等待复查，复查不通过退回并保留全部历史记录，复查通过后不再计入待整改；列表支持按待整改/已逾期筛选，逾期任务醒目显示；同一检查项只有一条任务，重复提交只保留一条办理结果。
 - 培训管理：创建培训、记录签到与通过率。
 - 资质审核：提交资质、审核、过期预警。
 - 审计日志：写操作自动记录（管理员查看）。

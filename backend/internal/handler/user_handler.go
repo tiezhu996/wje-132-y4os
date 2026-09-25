@@ -93,6 +93,20 @@ func (h *UserHandler) List(c *gin.Context) {
 	OK(c, pageResponse(list, total, q.Page, q.PageSize))
 }
 
+// Options 精简用户选项（id/name/role），供责任人等下拉选择。
+func (h *UserHandler) Options(c *gin.Context) {
+	list, err := h.svc.ListAll()
+	if err != nil {
+		h.wrapError(c, err, "User options failed")
+		return
+	}
+	options := make([]gin.H, 0, len(list))
+	for _, u := range list {
+		options = append(options, gin.H{"id": u.ID, "name": u.Name, "role": u.Role})
+	}
+	OK(c, options)
+}
+
 func (h *UserHandler) wrapError(c *gin.Context, err error, ctx string) {
 	var appErr *util.AppError
 	if errors.As(err, &appErr) {

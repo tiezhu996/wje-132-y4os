@@ -59,6 +59,15 @@ func (r *UserRepository) Update(u *model.User) error {
 	return nil
 }
 
+// ListAll 查询全部用户。
+func (r *UserRepository) ListAll() ([]model.User, error) {
+	var list []model.User
+	if err := r.db.Order("id ASC").Find(&list).Error; err != nil {
+		return nil, fmt.Errorf("list all users: %w", err)
+	}
+	return list, nil
+}
+
 // List 分页查询用户。
 func (r *UserRepository) List(page, pageSize int) ([]model.User, int64, error) {
 	var list []model.User

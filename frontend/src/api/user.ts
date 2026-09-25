@@ -15,3 +15,7 @@ export function getMe() {
 export function updateProfile(data: { name?: string; avatar?: string }) {
   return request.put('/users/me', data)
 }
+
+export function listUserOptions() {
+  return request.get('/users/options')
+}

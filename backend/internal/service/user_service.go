@@ -107,6 +107,11 @@ func (s *UserService) List(page, pageSize int) ([]model.User, int64, error) {
 	return s.repo.List(page, pageSize)
 }
 
+// ListAll 查询全部用户（精简选项用）。
+func (s *UserService) ListAll() ([]model.User, error) {
+	return s.repo.ListAll()
+}
+
 func contains(list []string, v string) bool {
 	for _, x := range list {
 		if x == v {

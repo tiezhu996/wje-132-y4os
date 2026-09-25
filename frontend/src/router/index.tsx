@@ -4,6 +4,7 @@ import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import IncidentManage from '@/pages/IncidentManage'
 import InspectionManage from '@/pages/InspectionManage'
+import RectificationTasks from '@/pages/RectificationTasks'
 import TrainingManage from '@/pages/TrainingManage'
 import CertReview from '@/pages/CertReview'
 import Profile from '@/pages/Profile'
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'incidents', element: <IncidentManage /> },
       { path: 'inspections', element: <InspectionManage /> },
+      { path: 'rectification-tasks', element: <RectificationTasks /> },
       { path: 'trainings', element: <TrainingManage /> },
       { path: 'certifications', element: <CertReview /> },
       { path: 'profile', element: <Profile /> },

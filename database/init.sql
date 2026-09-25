@@ -63,6 +63,43 @@ CREATE TABLE IF NOT EXISTS inspection_items (
   KEY idx_items_inspection (inspection_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 整改任务：每个不合格检查项至多一条（uk_rect_tasks_item），退回/重提在同一条上流转
+CREATE TABLE IF NOT EXISTS rectification_tasks (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  inspection_id BIGINT UNSIGNED NOT NULL,
+  item_id BIGINT UNSIGNED NOT NULL,
+  item_name VARCHAR(200) NOT NULL DEFAULT '',
+  assignee_id BIGINT UNSIGNED NOT NULL,
+  deadline DATETIME NOT NULL,
+  status VARCHAR(30) NOT NULL DEFAULT 'pending',
+  rectification_note VARCHAR(500) NOT NULL DEFAULT '',
+  rectification_photo VARCHAR(255) NOT NULL DEFAULT '',
+  submitted_at DATETIME NULL,
+  reviewer_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  reviewed_at DATETIME NULL,
+  review_note VARCHAR(500) NOT NULL DEFAULT '',
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_rect_tasks_item (item_id),
+  KEY idx_rect_tasks_inspection (inspection_id),
+  KEY idx_rect_tasks_assignee (assignee_id),
+  KEY idx_rect_tasks_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 整改流转记录：登记/提交/退回/通过均追加一条，原记录保留不可改
+CREATE TABLE IF NOT EXISTS rectification_histories (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  task_id BIGINT UNSIGNED NOT NULL,
+  action VARCHAR(30) NOT NULL,
+  note VARCHAR(500) NOT NULL DEFAULT '',
+  photo_url VARCHAR(255) NOT NULL DEFAULT '',
+  operator_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (id),
+  KEY idx_rect_hist_task (task_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS safety_trainings (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   topic VARCHAR(200) NOT NULL,
@@ -121,13 +158,24 @@ INSERT INTO safety_incidents (id, title, description, occurred_at, site_id, area
 (3, '高处坠物未遂', '塔吊吊运时构件滑落未造成伤害。', DATE_SUB(NOW(), INTERVAL 5 DAY), 'SITE-A', '吊装区', 'minor', '物体打击', '["4"]', '[]', 'closed', '加强吊装指挥与警戒', DATE_SUB(NOW(), INTERVAL 2 DAY), 2, NOW(3));
 
 INSERT INTO safety_inspections (id, name, inspection_type, area, inspection_date, inspector_id, total_score, status, issue_count, passed_count, created_at) VALUES
-(1, '8月例行安全检查', 'routine', '全工地', DATE_SUB(NOW(), INTERVAL 1 DAY), 3, 92, 'completed', 3, 27, NOW(3)),
+(1, '8月例行安全检查', 'routine', '全工地', DATE_SUB(NOW(), INTERVAL 1 DAY), 3, 60, 'failed', 2, 3, NOW(3)),
 (2, '高处作业专项检查', 'special', '三层作业面', DATE_ADD(NOW(), INTERVAL 1 DAY), 3, 0, 'scheduled', 0, 0, NOW(3));
 
 INSERT INTO inspection_items (id, inspection_id, item_name, passed, remark, photo_url) VALUES
 (1, 1, '安全帽佩戴', 1, '', ''),
 (2, 1, '临边防护栏杆', 0, '东侧栏杆缺失', ''),
-(3, 1, '消防器材齐全', 1, '', '');
+(3, 1, '消防器材齐全', 1, '', ''),
+(4, 1, '配电箱接地保护', 0, '加工区二级箱未做重复接地', ''),
+(5, 1, '安全通道畅通', 1, '', '');
+
+INSERT INTO rectification_tasks (id, inspection_id, item_id, item_name, assignee_id, deadline, status, rectification_note, rectification_photo, submitted_at, reviewer_id, reviewed_at, review_note, created_at, updated_at) VALUES
+(1, 1, 2, '临边防护栏杆', 4, DATE_ADD(NOW(), INTERVAL 2 DAY), 'submitted', '已补装东侧临边防护栏杆并挂设密目安全网，请复查。', '', DATE_SUB(NOW(), INTERVAL 2 HOUR), 0, NULL, '', NOW(3), DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+(2, 1, 4, '配电箱接地保护', 4, DATE_SUB(NOW(), INTERVAL 1 DAY), 'pending', '', '', NULL, 0, NULL, '', NOW(3), NOW(3));
+
+INSERT INTO rectification_histories (id, task_id, action, note, photo_url, operator_id, created_at) VALUES
+(1, 1, 'register', CONCAT('8月例行安全检查 登记整改任务，期限 ', DATE_FORMAT(DATE_ADD(NOW(), INTERVAL 2 DAY), '%Y-%m-%d')), '', 3, NOW(3)),
+(2, 1, 'submit', '已补装东侧临边防护栏杆并挂设密目安全网，请复查。', '', 4, DATE_SUB(NOW(), INTERVAL 2 HOUR)),
+(3, 2, 'register', CONCAT('8月例行安全检查 登记整改任务，期限 ', DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 1 DAY), '%Y-%m-%d')), '', 3, NOW(3));
 
 INSERT INTO safety_trainings (id, topic, training_type, training_date, duration_hours, trainer, location, content_summary, participant_ids, assessment_method, pass_rate, created_at) VALUES
 (1, '新员工入场安全培训', 'induction', DATE_SUB(NOW(), INTERVAL 3 DAY), 4, '王安全', '培训室A', '入场安全须知与应急疏散。', '["4"]', '笔试', 95.00, NOW(3)),

@@ -14,6 +14,8 @@ const (
 	CodeUserExists             = 40001
 	CodeInvalidCredentials     = 40101
 	CodeIncidentStatusConflict = 40901
+	CodeRectTaskConflict       = 40902
+	CodeRectTaskExists         = 40903
 	CodeUploadTooLarge         = 41300
 	CodeUnsupportedType        = 41500
 )

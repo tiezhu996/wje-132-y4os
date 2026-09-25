@@ -7,6 +7,7 @@ const items = [
   { key: '/dashboard', label: '安全概览' },
   { key: '/incidents', label: '事件管理' },
   { key: '/inspections', label: '检查管理' },
+  { key: '/rectification-tasks', label: '整改跟踪' },
   { key: '/trainings', label: '培训管理' },
   { key: '/certifications', label: '资质审核' },
   { key: '/audit-logs', label: '审计日志' },

@@ -22,6 +22,7 @@ type Router struct {
 	incident   *handler.SafetyIncidentHandler
 	inspection *handler.SafetyInspectionHandler
 	item       *handler.InspectionItemHandler
+	rectTask   *handler.RectificationTaskHandler
 	training   *handler.SafetyTrainingHandler
 	cert       *handler.WorkerCertificationHandler
 	dashboard  *handler.DashboardHandler
@@ -33,12 +34,14 @@ type Router struct {
 func New(cfg *config.Config, db *gorm.DB, logger *slog.Logger,
 	user *handler.UserHandler, incident *handler.SafetyIncidentHandler,
 	inspection *handler.SafetyInspectionHandler, item *handler.InspectionItemHandler,
+	rectTask *handler.RectificationTaskHandler,
 	training *handler.SafetyTrainingHandler, cert *handler.WorkerCertificationHandler,
 	dashboard *handler.DashboardHandler, upload *handler.UploadHandler, auditLog *handler.AuditLogHandler) *Router {
 	return &Router{
 		cfg: cfg, db: db, logger: logger,
 		limiter: middleware.NewRateLimiter(cfg.RateLimitPerMinute),
 		user:    user, incident: incident, inspection: inspection, item: item,
+		rectTask: rectTask,
 		training: training, cert: cert, dashboard: dashboard, upload: upload, auditLog: auditLog,
 	}
 }
@@ -66,6 +69,7 @@ func (r *Router) Setup() *gin.Engine {
 	r.registerIncidentRoutes(v1)
 	r.registerInspectionRoutes(v1)
 	r.registerItemRoutes(v1)
+	r.registerRectTaskRoutes(v1)
 	r.registerTrainingRoutes(v1)
 	r.registerCertRoutes(v1)
 	r.registerDashboardRoutes(v1)

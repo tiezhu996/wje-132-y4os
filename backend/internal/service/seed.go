@@ -55,7 +55,7 @@ func (s *SeedService) Seed() error {
 		}
 	}
 	inspections := []model.SafetyInspection{
-		{Name: "8月例行安全检查", InspectionType: constants.InspectionRoutine, Area: "全工地", InspectionDate: time.Now().AddDate(0, 0, -1), InspectorID: 3, TotalScore: 92, Status: constants.InspectionCompleted, IssueCount: 1, PassedCount: 2},
+		{Name: "8月例行安全检查", InspectionType: constants.InspectionRoutine, Area: "全工地", InspectionDate: time.Now().AddDate(0, 0, -1), InspectorID: 3, TotalScore: 60, Status: constants.InspectionFailed, IssueCount: 2, PassedCount: 3},
 		{Name: "高处作业专项检查", InspectionType: constants.InspectionSpecial, Area: "三层作业面", InspectionDate: time.Now().AddDate(0, 0, 1), InspectorID: 3, Status: constants.InspectionScheduled},
 	}
 	for i := range inspections {
@@ -67,9 +67,35 @@ func (s *SeedService) Seed() error {
 		{InspectionID: 1, ItemName: "安全帽佩戴", Passed: true},
 		{InspectionID: 1, ItemName: "临边防护栏杆", Passed: false, Remark: "东侧栏杆缺失"},
 		{InspectionID: 1, ItemName: "消防器材齐全", Passed: true},
+		{InspectionID: 1, ItemName: "配电箱接地保护", Passed: false, Remark: "加工区二级箱未做重复接地"},
+		{InspectionID: 1, ItemName: "安全通道畅通", Passed: true},
 	}
 	for i := range items {
 		if err := s.db.Create(&items[i]).Error; err != nil {
+			return err
+		}
+	}
+	tasks := []model.RectificationTask{
+		// 已提交整改说明，等待复查（未逾期）
+		{InspectionID: 1, ItemID: 2, ItemName: "临边防护栏杆", AssigneeID: 4, Deadline: time.Now().AddDate(0, 0, 2),
+			Status: constants.RectTaskSubmitted, RectificationNote: "已补装东侧临边防护栏杆并挂设密目安全网，请复查。",
+			SubmittedAt: ptrTime(time.Now().Add(-2 * time.Hour))},
+		// 已逾期仍未整改
+		{InspectionID: 1, ItemID: 4, ItemName: "配电箱接地保护", AssigneeID: 4, Deadline: time.Now().AddDate(0, 0, -1),
+			Status: constants.RectTaskPending},
+	}
+	for i := range tasks {
+		if err := s.db.Create(&tasks[i]).Error; err != nil {
+			return err
+		}
+	}
+	histories := []model.RectificationHistory{
+		{TaskID: tasks[0].ID, Action: constants.RectActionRegister, Note: "8月例行安全检查 登记整改任务", OperatorID: 3},
+		{TaskID: tasks[0].ID, Action: constants.RectActionSubmit, Note: tasks[0].RectificationNote, OperatorID: 4},
+		{TaskID: tasks[1].ID, Action: constants.RectActionRegister, Note: "8月例行安全检查 登记整改任务", OperatorID: 3},
+	}
+	for i := range histories {
+		if err := s.db.Create(&histories[i]).Error; err != nil {
 			return err
 		}
 	}
@@ -95,3 +121,6 @@ func (s *SeedService) Seed() error {
 	s.logger.Info("seed data created")
 	return nil
 }
+
+// ptrTime 返回时间指针（种子数据用）。
+func ptrTime(t time.Time) *time.Time { return &t }
